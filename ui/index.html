@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MovieShelf — Projekt UI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="workspace">
+    <aside class="brief">
+      <h1>MovieShelf</h1>
+      <p class="brief-lead">Projekt UI aplikacji do osobistej półki filmów — lista, szczegóły, dodawanie z API, lokalizacja seansu i losowanie przez potrząśnięcie.</p>
+
+      <h2>Ekrany</h2>
+      <nav class="screen-nav" id="screenNav">
+        <button type="button" data-screen="shelf" class="active">1. Półka</button>
+        <button type="button" data-screen="detail">2. Szczegóły</button>
+        <button type="button" data-screen="search">3. Dodaj / Szukaj</button>
+        <button type="button" data-screen="edit">4. Edycja</button>
+        <button type="button" data-screen="shaker">5. Movie Shaker</button>
+      </nav>
+
+      <h2>Nawigacja</h2>
+      <ol class="flow">
+        <li><strong>Półka</strong> → zakładki: Do obejrzenia / Obejrzane / Ulubione</li>
+        <li><strong>Półka</strong> → tap karty → <strong>Szczegóły</strong></li>
+        <li><strong>Półka</strong> → FAB „+” → <strong>Dodaj / Szukaj</strong> (TMDb)</li>
+        <li><strong>Szczegóły</strong> → Edytuj → <strong>Edycja</strong> (ocena, notatka, status, GPS)</li>
+        <li>Bottom bar → <strong>Movie Shaker</strong> (akcelerometr)</li>
+      </ol>
+
+      <h2>Design system</h2>
+      <ul class="tokens">
+        <li><span class="swatch bg"></span> Tło <code>#F2F5F8</code></li>
+        <li><span class="swatch ink"></span> Tekst <code>#15202B</code></li>
+        <li><span class="swatch amber"></span> Akcent <code>#D97706</code></li>
+        <li><span class="swatch teal"></span> Status / GPS <code>#0F766E</code></li>
+        <li>Font brand: <strong>Space Grotesk</strong></li>
+        <li>Font UI: <strong>Outfit</strong></li>
+      </ul>
+    </aside>
+
+    <main class="stage">
+      <div class="phone">
+        <div class="phone-notch" aria-hidden="true"></div>
+        <div class="phone-screen" id="phoneScreen">
+
+          <!-- 1. SHELF -->
+          <section class="screen" id="screen-shelf" data-active="true">
+            <header class="topbar">
+              <div>
+                <p class="brand">MovieShelf</p>
+                <h2 class="screen-title">Twoja półka</h2>
+              </div>
+              <button class="icon-btn" type="button" title="Shake" data-goto="shaker">◎</button>
+            </header>
+
+            <div class="tabs" role="tablist">
+              <button class="tab active" type="button">Do obejrzenia</button>
+              <button class="tab" type="button">Obejrzane</button>
+              <button class="tab" type="button">Ulubione</button>
+            </div>
+
+            <div class="movie-list">
+              <article class="movie-row" data-goto="detail">
+                <div class="poster p1"></div>
+                <div class="movie-meta">
+                  <h3>Dune: Part Two</h3>
+                  <p>2024 · Sci-Fi</p>
+                  <span class="chip muted">Wishlist</span>
+                </div>
+              </article>
+              <article class="movie-row" data-goto="detail">
+                <div class="poster p2"></div>
+                <div class="movie-meta">
+                  <h3>Oppenheimer</h3>
+                  <p>2023 · Biograficzny</p>
+                  <span class="chip muted">Wishlist</span>
+                </div>
+              </article>
+              <article class="movie-row" data-goto="detail">
+                <div class="poster p3"></div>
+                <div class="movie-meta">
+                  <h3>Everything Everywhere</h3>
+                  <p>2022 · Akcja</p>
+                  <span class="chip muted">Wishlist</span>
+                </div>
+              </article>
+              <article class="movie-row" data-goto="detail">
+                <div class="poster p4"></div>
+                <div class="movie-meta">
+                  <h3>Past Lives</h3>
+                  <p>2023 · Dramat</p>
+                  <span class="chip muted">Wishlist</span>
+                </div>
+              </article>
+              <p class="lazy-hint">Lazy loading · kolejne 10 pozycji…</p>
+            </div>
+
+            <button class="fab" type="button" data-goto="search">+</button>
+
+            <nav class="bottom-nav">
+              <button class="nav-item active" type="button" data-goto="shelf"><span>▣</span>Półka</button>
+              <button class="nav-item" type="button" data-goto="shaker"><span>⟳</span>Shaker</button>
+              <button class="nav-item" type="button" data-goto="search"><span>+</span>Dodaj</button>
+            </nav>
+          </section>
+
+          <!-- 2. DETAIL -->
+          <section class="screen" id="screen-detail">
+            <header class="topbar compact">
+              <button class="text-btn" type="button" data-goto="shelf">← Wróć</button>
+              <button class="text-btn accent" type="button" data-goto="edit">Edytuj</button>
+            </header>
+
+            <div class="detail-hero">
+              <div class="poster large p1"></div>
+              <div class="detail-copy">
+                <p class="brand">MovieShelf</p>
+                <h2>Dune: Part Two</h2>
+                <p class="sub">2024 · Sci-Fi · 166 min</p>
+                <div class="rating">★★★★☆ <span>4.0</span></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3>Opis</h3>
+              <p>Paul Atreides łączy siły z Chani i Fremenami, by pomścić rodzinę i zapobiec straszliwej przyszłości, którą tylko on potrafi przewidzieć.</p>
+            </div>
+
+            <div class="panel">
+              <h3>Notatka</h3>
+              <p class="empty-note">Brak własnej notatki — dodaj w edycji.</p>
+            </div>
+
+            <div class="panel location">
+              <h3>Miejsce seansu</h3>
+              <p class="loc-label">Kino Helios · Gdańsk</p>
+              <p class="loc-coords">54.352 °N, 18.646 °E · zapisane GPS</p>
+            </div>
+
+            <div class="detail-actions">
+              <button class="btn primary" type="button">Oznacz jako obejrzany</button>
+              <button class="btn ghost" type="button">♥ Ulubione</button>
+            </div>
+          </section>
+
+          <!-- 3. SEARCH -->
+          <section class="screen" id="screen-search">
+            <header class="topbar compact">
+              <button class="text-btn" type="button" data-goto="shelf">← Anuluj</button>
+            </header>
+            <p class="brand inset">MovieShelf</p>
+            <h2 class="screen-title inset">Dodaj film</h2>
+            <p class="hint inset">Wyszukaj w TMDb — plakat, rok, gatunek i opis pobiorą się same.</p>
+
+            <label class="search-box">
+              <span class="sr-only">Szukaj tytułu</span>
+              <input type="search" placeholder="np. Dune, Parasite…" value="dun" />
+            </label>
+
+            <div class="search-results">
+              <article class="search-row" data-goto="edit">
+                <div class="poster sm p1"></div>
+                <div>
+                  <h3>Dune: Part Two</h3>
+                  <p>2024</p>
+                </div>
+                <span class="add-mark">+</span>
+              </article>
+              <article class="search-row">
+                <div class="poster sm p5"></div>
+                <div>
+                  <h3>Dune</h3>
+                  <p>2021</p>
+                </div>
+                <span class="add-mark">+</span>
+              </article>
+              <article class="search-row">
+                <div class="poster sm p6"></div>
+                <div>
+                  <h3>Dune (TV Mini)</h3>
+                  <p>2000</p>
+                </div>
+                <span class="add-mark">+</span>
+              </article>
+            </div>
+
+            <button class="btn ghost full" type="button">Dodaj ręcznie bez API</button>
+          </section>
+
+          <!-- 4. EDIT -->
+          <section class="screen" id="screen-edit">
+            <header class="topbar compact">
+              <button class="text-btn" type="button" data-goto="detail">← Anuluj</button>
+              <button class="text-btn accent" type="button" data-goto="detail">Zapisz</button>
+            </header>
+            <p class="brand inset">MovieShelf</p>
+            <h2 class="screen-title inset">Edycja</h2>
+
+            <form class="form" onsubmit="return false">
+              <label>Status
+                <select>
+                  <option>Do obejrzenia</option>
+                  <option>Obejrzany</option>
+                  <option>Ulubiony</option>
+                </select>
+              </label>
+              <label>Ocena (1–5)
+                <input type="range" min="1" max="5" value="4" />
+              </label>
+              <label>Notatka
+                <textarea rows="3" placeholder="Co zapamiętać po seansie…"></textarea>
+              </label>
+              <div class="gps-card">
+                <div>
+                  <h3>Lokalizacja seansu</h3>
+                  <p>Użyj GPS, żeby zapisać miejsce oglądania.</p>
+                </div>
+                <button class="btn primary sm" type="button">Pobierz GPS</button>
+              </div>
+              <label>Etykieta miejsca
+                <input type="text" placeholder="np. kanapa w salonie, Helios" value="Kino Helios · Gdańsk" />
+              </label>
+              <button class="btn danger full" type="button" data-goto="shelf">Usuń z półki</button>
+            </form>
+          </section>
+
+          <!-- 5. SHAKER -->
+          <section class="screen shaker-screen" id="screen-shaker">
+            <header class="topbar compact">
+              <button class="text-btn" type="button" data-goto="shelf">← Wróć</button>
+            </header>
+            <div class="shaker-body">
+              <p class="brand">MovieShelf</p>
+              <h2>Movie Shaker</h2>
+              <p class="shaker-copy">Potrząśnij telefonem — wylosujemy film z listy „Do obejrzenia”.</p>
+              <div class="shake-orb" aria-hidden="true">
+                <span>⟳</span>
+              </div>
+              <p class="shake-hint">lub tapnij orb, żeby zasymulować shake</p>
+              <div class="picked hidden" id="pickedCard">
+                <div class="poster sm p2"></div>
+                <div>
+                  <p class="picked-label">Na dziś wieczór</p>
+                  <h3>Oppenheimer</h3>
+                </div>
+              </div>
+              <button class="btn primary" type="button" id="shakeBtn">Wylosuj teraz</button>
+            </div>
+            <nav class="bottom-nav">
+              <button class="nav-item" type="button" data-goto="shelf"><span>▣</span>Półka</button>
+              <button class="nav-item active" type="button" data-goto="shaker"><span>⟳</span>Shaker</button>
+              <button class="nav-item" type="button" data-goto="search"><span>+</span>Dodaj</button>
+            </nav>
+          </section>
+
+        </div>
+      </div>
+      <p class="stage-caption">Makieta mobilna · klikaj nawigację z lewej lub elementy w telefonie</p>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
