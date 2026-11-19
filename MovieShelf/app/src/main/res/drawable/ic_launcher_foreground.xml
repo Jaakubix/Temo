@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Prosta ikona „półki” — wystarczy na start projektu -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#D97706"
+        android:pathData="M30,34h48v8h-48z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,46h10v28h-10z" />
+    <path
+        android:fillColor="#F2F5F8"
+        android:pathData="M49,46h10v28h-10z" />
+    <path
+        android:fillColor="#0F766E"
+        android:pathData="M64,46h10v28h-10z" />
+</vector>

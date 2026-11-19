@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Kolory zgodne z makietą UI -->
+    <color name="ms_bg">#F2F5F8</color>
+    <color name="ms_ink">#15202B</color>
+    <color name="ms_amber">#D97706</color>
+    <color name="ms_teal">#0F766E</color>
+    <color name="ic_launcher_background">#15202B</color>
+</resources>

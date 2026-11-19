@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MovieShelf</string>
+    <string name="search_title">Dodaj film</string>
+    <string name="search_hint">np. Dune, Parasite…</string>
+    <string name="search_subtitle">Wyszukaj w TMDb — plakat, rok, gatunek i opis pobiorą się same.</string>
+    <string name="loading">Szukam filmów…</string>
+    <string name="no_connection_title">Brak połączenia</string>
+    <string name="no_connection_body">Sprawdź Wi‑Fi lub dane mobilne i spróbuj ponownie.</string>
+    <string name="error_title">Coś poszło nie tak</string>
+    <string name="empty_results">Brak wyników dla tego zapytania.</string>
+    <string name="retry">Spróbuj ponownie</string>
+    <string name="idle_hint">Wpisz tytuł, żeby wyszukać film.</string>
+    <string name="year_unknown">Rok nieznany</string>
+    <string name="missing_api_key">Brak klucza TMDB_API_KEY w local.properties.</string>
+</resources>
