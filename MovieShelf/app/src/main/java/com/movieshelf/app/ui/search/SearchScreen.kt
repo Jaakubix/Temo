@@ -23,6 +23,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -32,7 +33,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.movieshelf.app.ui.components.BrandLabel
 import com.movieshelf.app.ui.components.EmptyResultsPanel
 import com.movieshelf.app.ui.components.ErrorPanel
@@ -52,20 +52,23 @@ import com.movieshelf.app.ui.theme.MsTeal
 import com.movieshelf.app.ui.theme.MsTealSoft
 import com.movieshelf.app.ui.theme.Outfit
 
-/**
- * Ekran „Dodaj / Szukaj” — UI z makiety + prawdziwe TMDb (loading / error / offline).
- */
 @Composable
 fun SearchScreen(
+    viewModel: SearchViewModel,
     onCancel: () -> Unit,
-    onMoviePicked: () -> Unit = {},
-    modifier: Modifier = Modifier,
-    viewModel: SearchViewModel = viewModel()
+    onMovieAdded: (Long) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val query by viewModel.query.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     val isOnline by viewModel.isOnline.collectAsState()
     val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(Unit) {
+        viewModel.addedMovieId.collect { id ->
+            onMovieAdded(id)
+        }
+    }
 
     Column(
         modifier = modifier
@@ -80,7 +83,7 @@ fun SearchScreen(
         ScreenTitle("Dodaj film")
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "Wyszukaj w TMDb — plakat, rok, gatunek i opis pobiorą się same.",
+            text = "Wyszukaj w TMDb — po dodaniu film trafia do lokalnej bazy (offline).",
             fontFamily = Outfit,
             fontSize = 14.sp,
             lineHeight = 20.sp,
@@ -130,26 +133,19 @@ fun SearchScreen(
             }
 
             SearchUiState.Loading -> LoadingPanel(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
+                modifier = Modifier.fillMaxWidth().weight(1f)
             )
 
             is SearchUiState.Success -> {
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+                    modifier = Modifier.fillMaxWidth().weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(bottom = 12.dp)
                 ) {
                     items(state.movies, key = { it.tmdbId }) { movie ->
                         MovieSearchRow(
                             movie = movie,
-                            onClick = {
-                                // Później: zapis do Room i przejście do edycji
-                                onMoviePicked()
-                            }
+                            onClick = { viewModel.addMovie(movie) }
                         )
                     }
                 }
@@ -178,10 +174,9 @@ fun SearchScreen(
             }
         }
 
-        // Przycisk jak w makiecie — ręczny zapis bez API (później z formularzem)
         MsGhostButton(
             text = "Dodaj ręcznie bez API",
-            onClick = onMoviePicked,
+            onClick = viewModel::addManual,
             modifier = Modifier.padding(bottom = 20.dp)
         )
     }
@@ -200,7 +195,7 @@ private fun OfflineBanner() {
     ) {
         Icon(Icons.Outlined.WifiOff, contentDescription = null, tint = MsTeal)
         Text(
-            text = "Jesteś offline — wyniki pojawią się po połączeniu.",
+            text = "Offline — możesz dodać film ręcznie; TMDb wymaga sieci.",
             color = MsInk,
             fontFamily = Outfit,
             fontSize = 13.sp,

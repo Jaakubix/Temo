@@ -2,6 +2,7 @@ package com.movieshelf.app.ui.edit
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -20,19 +22,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.clickable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.movieshelf.app.data.demo.demoMovieById
+import com.movieshelf.app.data.model.MovieStatus
 import com.movieshelf.app.ui.components.BrandLabel
 import com.movieshelf.app.ui.components.MsDangerButton
 import com.movieshelf.app.ui.components.MsTextButton
@@ -48,23 +52,57 @@ import com.movieshelf.app.ui.theme.MsTealSoft
 import com.movieshelf.app.ui.theme.Outfit
 import com.movieshelf.app.ui.theme.SpaceGrotesk
 
-/** Ekran edycji — status, ocena, notatka, GPS, usuwanie (jak makieta) */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditScreen(
-    movieId: Int,
+    viewModel: EditViewModel,
     onCancel: () -> Unit,
-    onSave: () -> Unit,
-    onDelete: () -> Unit,
+    onSaved: () -> Unit,
+    onDeleted: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val movie = demoMovieById(movieId)
+    val movie by viewModel.movie.collectAsState()
+    val saved by viewModel.saved.collectAsState()
+    val deleted by viewModel.deleted.collectAsState()
+
+    LaunchedEffect(saved) { if (saved) onSaved() }
+    LaunchedEffect(deleted) { if (deleted) onDeleted() }
+
+    if (movie == null) {
+        Column(
+            modifier = modifier.fillMaxSize().background(MsBg),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator(color = MsAmber)
+        }
+        return
+    }
+
+    val m = movie!!
     val statuses = listOf("Do obejrzenia", "Obejrzany", "Ulubiony")
-    var statusIndex by remember { mutableStateOf(0) }
-    var rating by remember { mutableFloatStateOf(movie.rating.coerceIn(1f, 5f).takeIf { it > 0 } ?: 4f) }
-    var note by remember { mutableStateOf(movie.note.orEmpty()) }
-    var placeLabel by remember { mutableStateOf(movie.locationLabel ?: "Kino Helios · Gdańsk") }
-    var gpsHint by remember { mutableStateOf("Użyj GPS, żeby zapisać miejsce oglądania.") }
+    var statusIndex by remember(m.id) {
+        mutableIntStateOf(
+            when {
+                m.isFavorite -> 2
+                m.status == MovieStatus.WATCHED -> 1
+                else -> 0
+            }
+        )
+    }
+    var rating by remember(m.id) {
+        mutableFloatStateOf(m.rating.coerceIn(1f, 5f).takeIf { m.rating > 0 } ?: 3f)
+    }
+    var note by remember(m.id) { mutableStateOf(m.note.orEmpty()) }
+    var placeLabel by remember(m.id) { mutableStateOf(m.locationLabel.orEmpty()) }
+    var lat by remember(m.id) { mutableStateOf(m.locationLat) }
+    var lng by remember(m.id) { mutableStateOf(m.locationLng) }
+    var gpsHint by remember(m.id) {
+        mutableStateOf(
+            if (m.locationLat != null) "Współrzędne zapisane lokalnie"
+            else "Użyj GPS, żeby zapisać miejsce oglądania."
+        )
+    }
 
     Column(
         modifier = modifier
@@ -80,17 +118,29 @@ fun EditScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             MsTextButton(text = "← Anuluj", onClick = onCancel)
-            MsTextButton(text = "Zapisz", onClick = onSave, accent = true)
+            MsTextButton(
+                text = "Zapisz",
+                onClick = {
+                    viewModel.save(statusIndex, rating, note, placeLabel, lat, lng)
+                },
+                accent = true
+            )
         }
 
         BrandLabel()
         Spacer(modifier = Modifier.height(4.dp))
         ScreenTitle("Edycja")
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = m.title,
+            fontFamily = Outfit,
+            color = MsInkSoft,
+            fontSize = 14.sp
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
         FieldLabel("Status")
         Spacer(modifier = Modifier.height(6.dp))
-        // Prosty „select” jako 3 chipy — bez natywnego Spinnera
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             statuses.forEachIndexed { index, label ->
                 val active = index == statusIndex
@@ -134,15 +184,7 @@ fun EditScreen(
             placeholder = { Text("Co zapamiętać po seansie…", color = MsInkSoft) },
             minLines = 3,
             shape = RoundedCornerShape(12.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MsBgElevated,
-                unfocusedContainerColor = MsBgElevated,
-                focusedIndicatorColor = MsAmber,
-                unfocusedIndicatorColor = MsLine,
-                cursorColor = MsAmber,
-                focusedTextColor = MsInk,
-                unfocusedTextColor = MsInk
-            )
+            colors = textFieldColors()
         )
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -164,12 +206,7 @@ fun EditScreen(
                     color = MsInk
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = gpsHint,
-                    fontFamily = Outfit,
-                    fontSize = 12.sp,
-                    color = MsInkSoft
-                )
+                Text(text = gpsHint, fontFamily = Outfit, fontSize = 12.sp, color = MsInkSoft)
             }
             Text(
                 text = "Pobierz GPS",
@@ -177,8 +214,11 @@ fun EditScreen(
                     .clip(RoundedCornerShape(10.dp))
                     .background(MsInk)
                     .clickable {
-                        // Placeholder — prawdziwy GPS dołożymy z sensorami
+                        // Placeholder współrzędnych — prawdziwy GPS w etapie sensorów
+                        lat = 54.352
+                        lng = 18.646
                         gpsHint = "54.352 °N, 18.646 °E"
+                        if (placeLabel.isBlank()) placeLabel = "Kino Helios · Gdańsk"
                     }
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 color = MsBgElevated,
@@ -198,19 +238,11 @@ fun EditScreen(
             placeholder = { Text("np. kanapa w salonie, Helios", color = MsInkSoft) },
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MsBgElevated,
-                unfocusedContainerColor = MsBgElevated,
-                focusedIndicatorColor = MsAmber,
-                unfocusedIndicatorColor = MsLine,
-                cursorColor = MsAmber,
-                focusedTextColor = MsInk,
-                unfocusedTextColor = MsInk
-            )
+            colors = textFieldColors()
         )
 
         Spacer(modifier = Modifier.height(18.dp))
-        MsDangerButton(text = "Usuń z półki", onClick = onDelete)
+        MsDangerButton(text = "Usuń z półki", onClick = viewModel::delete)
     }
 }
 
@@ -224,3 +256,14 @@ private fun FieldLabel(text: String) {
         color = MsInkSoft
     )
 }
+
+@Composable
+private fun textFieldColors() = TextFieldDefaults.colors(
+    focusedContainerColor = MsBgElevated,
+    unfocusedContainerColor = MsBgElevated,
+    focusedIndicatorColor = MsAmber,
+    unfocusedIndicatorColor = MsLine,
+    cursorColor = MsAmber,
+    focusedTextColor = MsInk,
+    unfocusedTextColor = MsInk
+)

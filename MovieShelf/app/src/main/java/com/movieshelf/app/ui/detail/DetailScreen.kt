@@ -14,20 +14,23 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.movieshelf.app.data.demo.demoMovieById
+import com.movieshelf.app.data.model.MovieStatus
 import com.movieshelf.app.ui.components.BrandLabel
 import com.movieshelf.app.ui.components.MsGhostButton
 import com.movieshelf.app.ui.components.MsPrimaryButton
 import com.movieshelf.app.ui.components.MsTextButton
-import com.movieshelf.app.ui.components.PosterPlaceholder
+import com.movieshelf.app.ui.components.ShelfPoster
 import com.movieshelf.app.ui.theme.MsAmber
 import com.movieshelf.app.ui.theme.MsBg
 import com.movieshelf.app.ui.theme.MsBgElevated
@@ -39,16 +42,29 @@ import com.movieshelf.app.ui.theme.MsTealSoft
 import com.movieshelf.app.ui.theme.Outfit
 import com.movieshelf.app.ui.theme.SpaceGrotesk
 
-/** Ekran szczegółów — układ jak w makiecie (hero, panele, GPS, akcje) */
 @Composable
 fun DetailScreen(
-    movieId: Int,
+    viewModel: DetailViewModel,
     onBack: () -> Unit,
-    onEdit: (Int) -> Unit,
+    onEdit: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val movie = demoMovieById(movieId)
-    val runtime = movie.runtimeMinutes?.let { " · $it min" }.orEmpty()
+    val movie by viewModel.movie.collectAsState()
+
+    if (movie == null) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MsBg),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator(color = MsAmber)
+        }
+        return
+    }
+
+    val m = movie!!
 
     Column(
         modifier = modifier
@@ -64,7 +80,7 @@ fun DetailScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             MsTextButton(text = "← Wróć", onClick = onBack)
-            MsTextButton(text = "Edytuj", onClick = { onEdit(movie.id) }, accent = true)
+            MsTextButton(text = "Edytuj", onClick = { onEdit(m.id) }, accent = true)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -73,18 +89,13 @@ fun DetailScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Bottom
         ) {
-            PosterPlaceholder(
-                styleIndex = movie.posterStyle,
-                width = 110.dp,
-                height = 154.dp,
-                corner = 14.dp
-            )
+            ShelfPoster(movie = m, width = 110.dp, height = 154.dp, corner = 14.dp)
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 BrandLabel()
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = movie.title,
+                    text = m.title,
                     fontFamily = SpaceGrotesk,
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
@@ -93,36 +104,35 @@ fun DetailScreen(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "${movie.year} · ${movie.genre}$runtime",
+                    text = listOfNotNull(m.year, m.genre).joinToString(" · "),
                     fontFamily = Outfit,
                     fontSize = 13.sp,
                     color = MsInkSoft
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                // Ocena gwiazdkowa jak w makiecie
-                val filled = movie.rating.toInt().coerceIn(0, 5)
+                val filled = m.rating.toInt().coerceIn(0, 5)
                 Text(
-                    text = "★".repeat(filled) + "☆".repeat(5 - filled) + "  ${"%.1f".format(movie.rating)}",
+                    text = "★".repeat(filled) + "☆".repeat(5 - filled) +
+                        if (m.rating > 0) "  ${"%.1f".format(m.rating)}" else "",
                     color = MsAmber,
                     fontFamily = Outfit,
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp,
-                    letterSpacing = 1.sp
+                    fontSize = 14.sp
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        InfoPanel(title = "Opis", body = movie.overview)
+        InfoPanel(title = "Opis", body = m.overview.ifBlank { "Brak opisu." })
         Spacer(modifier = Modifier.height(10.dp))
         InfoPanel(
             title = "Notatka",
-            body = movie.note ?: "Brak własnej notatki — dodaj w edycji.",
-            italic = movie.note == null
+            body = m.note ?: "Brak własnej notatki — dodaj w edycji.",
+            italic = m.note == null
         )
         Spacer(modifier = Modifier.height(10.dp))
 
-        if (movie.locationLabel != null) {
+        if (!m.locationLabel.isNullOrBlank()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -139,16 +149,16 @@ fun DetailScreen(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = movie.locationLabel,
+                    text = m.locationLabel,
                     fontFamily = Outfit,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp,
                     color = MsInk
                 )
-                movie.locationCoords?.let {
+                if (m.locationLat != null && m.locationLng != null) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = it,
+                        text = "%.3f °N, %.3f °E · zapisane lokalnie".format(m.locationLat, m.locationLng),
                         fontFamily = Outfit,
                         fontSize = 12.sp,
                         color = MsTeal
@@ -159,9 +169,15 @@ fun DetailScreen(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        MsPrimaryButton(text = "Oznacz jako obejrzany", onClick = { /* później: update statusu */ })
+        MsPrimaryButton(
+            text = if (m.status == MovieStatus.WATCHED) "Obejrzany ✓" else "Oznacz jako obejrzany",
+            onClick = viewModel::markWatched
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        MsGhostButton(text = "♥ Ulubione", onClick = { /* później: ulubione */ })
+        MsGhostButton(
+            text = if (m.isFavorite) "♥ Ulubione" else "♡ Dodaj do ulubionych",
+            onClick = viewModel::toggleFavorite
+        )
     }
 }
 

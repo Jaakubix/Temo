@@ -12,9 +12,7 @@ import com.movieshelf.app.ui.navigation.MovieShelfApp
 import com.movieshelf.app.ui.theme.MovieShelfTheme
 import com.movieshelf.app.ui.theme.MsBg
 
-/**
- * Główne Activity — hostuje nawigację ekranów z makiety MovieShelf.
- */
+/** Host UI — logika w ViewModelach + Room / Firebase */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

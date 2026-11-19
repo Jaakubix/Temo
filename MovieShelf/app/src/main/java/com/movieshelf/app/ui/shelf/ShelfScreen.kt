@@ -1,6 +1,8 @@
 package com.movieshelf.app.ui.shelf
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +18,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -24,12 +28,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.movieshelf.app.data.demo.DemoMovies
-import com.movieshelf.app.data.demo.DemoStatus
 import com.movieshelf.app.ui.components.AmberFab
 import com.movieshelf.app.ui.components.BottomTab
 import com.movieshelf.app.ui.components.BrandLabel
@@ -42,27 +44,29 @@ import com.movieshelf.app.ui.theme.MsBgElevated
 import com.movieshelf.app.ui.theme.MsInk
 import com.movieshelf.app.ui.theme.MsInkSoft
 import com.movieshelf.app.ui.theme.MsLine
+import com.movieshelf.app.ui.theme.MsTeal
+import com.movieshelf.app.ui.theme.MsTealSoft
 import com.movieshelf.app.ui.theme.Outfit
 
 /**
- * Ekran „Półka” — 1:1 z makietą (zakładki, lista, FAB, bottom bar).
+ * Półka z danymi z Room — działa offline.
+ * Zakładki filtrują lokalny stan (WATCHLIST / WATCHED / ulubione).
  */
 @Composable
 fun ShelfScreen(
-    onOpenDetail: (Int) -> Unit,
+    viewModel: ShelfViewModel,
+    userEmail: String?,
+    onOpenDetail: (Long) -> Unit,
     onOpenSearch: () -> Unit,
     onOpenShaker: () -> Unit,
+    onSignOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var tabIndex by remember { mutableIntStateOf(0) }
-
-    // Filtrowanie demo-danych wg zakładki (na razie wszystkie są WATCHLIST)
-    val filtered = remember(tabIndex) {
-        when (tabIndex) {
-            1 -> DemoMovies.filter { it.status == DemoStatus.WATCHED }
-            2 -> DemoMovies.filter { it.status == DemoStatus.FAVORITE }
-            else -> DemoMovies.filter { it.status == DemoStatus.WATCHLIST }
-        }
+    val allMovies by viewModel.movies.collectAsState()
+    val isOnline by viewModel.isOnline.collectAsState()
+    val filtered = remember(tabIndex, allMovies) {
+        viewModel.filter(tabIndex, allMovies)
     }
 
     Box(
@@ -82,53 +86,86 @@ fun ShelfScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     BrandLabel()
                     Spacer(modifier = Modifier.height(2.dp))
                     ScreenTitle("Twoja półka")
+                    if (!userEmail.isNullOrBlank()) {
+                        Text(
+                            text = userEmail,
+                            fontFamily = Outfit,
+                            fontSize = 12.sp,
+                            color = MsInkSoft
+                        )
+                    }
                 }
-                // Przycisk skrótu do Shakera (◎ w makiecie)
-                Box(
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = onSignOut) {
+                        Text("Wyloguj", color = MsInkSoft, fontFamily = Outfit, fontSize = 12.sp)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MsBgElevated)
+                            .border(1.dp, MsLine, RoundedCornerShape(12.dp))
+                            .clickable(onClick = onOpenShaker),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("◎", color = MsInk, fontSize = 18.sp)
+                    }
+                }
+            }
+
+            if (!isOnline) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "Tryb offline — półka z lokalnej bazy, wyszukiwanie TMDb niedostępne.",
                     modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MsBgElevated)
-                        .border(1.dp, MsLine, RoundedCornerShape(12.dp))
-                        .clickable(onClick = onOpenShaker),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("◎", color = MsInk, fontSize = 18.sp)
-                }
+                        .fillMaxWidth()
+                        .background(MsTealSoft, RoundedCornerShape(12.dp))
+                        .border(1.dp, MsTeal.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                        .padding(12.dp),
+                    fontFamily = Outfit,
+                    fontSize = 12.sp,
+                    color = MsInk
+                )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
             ShelfTabs(selectedIndex = tabIndex, onSelect = { tabIndex = it })
             Spacer(modifier = Modifier.height(14.dp))
 
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 100.dp)
-            ) {
-                items(filtered, key = { it.id }) { movie ->
-                    ShelfMovieRow(
-                        movie = movie,
-                        onClick = { onOpenDetail(movie.id) }
-                    )
-                }
-                item {
-                    Text(
-                        text = "Lazy loading · kolejne 10 pozycji…",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        fontFamily = Outfit,
-                        fontSize = 12.sp,
-                        color = MsInkSoft,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
+            if (filtered.isEmpty()) {
+                Text(
+                    text = when (tabIndex) {
+                        1 -> "Brak obejrzanych — oznacz film w szczegółach."
+                        2 -> "Brak ulubionych — dodaj serduszkiem w szczegółach."
+                        else -> "Półka pusta — dodaj film przez „+” lub wyszukiwarkę TMDb."
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 32.dp),
+                    fontFamily = Outfit,
+                    fontSize = 14.sp,
+                    color = MsInkSoft,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Medium
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(bottom = 100.dp)
+                ) {
+                    items(filtered, key = { it.id }) { movie ->
+                        ShelfMovieRow(
+                            movie = movie,
+                            onClick = { onOpenDetail(movie.id) }
+                        )
+                    }
                 }
             }
         }

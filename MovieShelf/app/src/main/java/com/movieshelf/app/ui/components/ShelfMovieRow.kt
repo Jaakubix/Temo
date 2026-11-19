@@ -16,11 +16,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.movieshelf.app.data.demo.DemoMovie
+import coil.compose.AsyncImage
+import com.movieshelf.app.data.model.ShelfMovie
 import com.movieshelf.app.ui.theme.MsBgElevated
 import com.movieshelf.app.ui.theme.MsInk
 import com.movieshelf.app.ui.theme.MsInkSoft
@@ -28,10 +30,10 @@ import com.movieshelf.app.ui.theme.MsLine
 import com.movieshelf.app.ui.theme.Outfit
 import com.movieshelf.app.ui.theme.SpaceGrotesk
 
-/** Karta filmu na półce — układ jak `.movie-row` w makiecie */
+/** Karta filmu na półce — dane z Room */
 @Composable
 fun ShelfMovieRow(
-    movie: DemoMovie,
+    movie: ShelfMovie,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -46,7 +48,7 @@ fun ShelfMovieRow(
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        PosterPlaceholder(styleIndex = movie.posterStyle)
+        ShelfPoster(movie = movie, width = 56.dp, height = 78.dp)
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -60,7 +62,7 @@ fun ShelfMovieRow(
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = "${movie.year} · ${movie.genre}",
+                text = listOfNotNull(movie.year, movie.genre).joinToString(" · "),
                 fontFamily = Outfit,
                 fontSize = 13.sp,
                 color = MsInkSoft
@@ -78,5 +80,34 @@ fun ShelfMovieRow(
                 color = MsInkSoft
             )
         }
+    }
+}
+
+@Composable
+fun ShelfPoster(
+    movie: ShelfMovie,
+    width: androidx.compose.ui.unit.Dp,
+    height: androidx.compose.ui.unit.Dp,
+    corner: androidx.compose.ui.unit.Dp = 10.dp
+) {
+    val url = movie.posterUrl()
+    if (url != null) {
+        AsyncImage(
+            model = url,
+            contentDescription = movie.title,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .width(width)
+                .height(height)
+                .clip(RoundedCornerShape(corner))
+                .background(MsLine)
+        )
+    } else {
+        PosterPlaceholder(
+            styleIndex = movie.posterStyle,
+            width = width,
+            height = height,
+            corner = corner
+        )
     }
 }

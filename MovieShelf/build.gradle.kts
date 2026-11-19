@@ -1,7 +1,10 @@
-// Wspólne wtyczki — wersje są deklarowane w katalogu wersji (libs),
-// a stosowane w module :app.
+// Wspólne wtyczki — stosowane w module :app
 plugins {
     id("com.android.application") version "8.7.3" apply false
     id("org.jetbrains.kotlin.android") version "2.0.21" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" apply false
+    // KSP generuje implementacje DAO Room
+    id("com.google.devtools.ksp") version "2.0.21-1.0.28" apply false
+    // Plugin Firebase — czyta app/google-services.json
+    id("com.google.gms.google-services") version "4.4.2" apply false
 }
