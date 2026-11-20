@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "000000000000",
-    "project_id": "movieshelf-replace-me",
-    "storage_bucket": "movieshelf-replace-me.appspot.com"
+    "project_number": "124248187006",
+    "project_id": "movieshelf-6b3a3",
+    "storage_bucket": "movieshelf-6b3a3.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:124248187006:android:88d475f39083f9ffa1382f",
         "android_client_info": {
           "package_name": "com.movieshelf.app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyReplaceWithRealFirebaseApiKey000"
+          "current_key": "AIzaSyBE4gNTNv1ZjjSXlgBmYQFxHoY62_973KQ"
         }
       ],
       "services": {

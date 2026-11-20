@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -27,7 +28,9 @@ class AuthViewModel(
     /** Tryb gościa — półka lokalna bez Firebase (gdy brak google-services) */
     private val _guestMode = MutableStateFlow(false)
 
-    private val firebaseLoggedIn = authRepository.authState()
+    // authState() emituje FirebaseUser? — mapujemy na Boolean zanim zrobimy stateIn
+    private val firebaseLoggedIn: StateFlow<Boolean> = authRepository.authState()
+        .map { user -> user != null }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), authRepository.isLoggedIn)
 
     /** Zalogowany przez Firebase LUB tryb gościa */

@@ -22,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -62,13 +61,6 @@ fun LoginScreen(
         BrandLabel()
         Spacer(modifier = Modifier.height(6.dp))
         ScreenTitle(if (isRegister) "Załóż konto" else "Zaloguj się")
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Firebase Auth — po zalogowaniu półka działa też offline.",
-            fontFamily = Outfit,
-            fontSize = 14.sp,
-            color = MsInkSoft
-        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -131,14 +123,6 @@ fun LoginScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Firebase: podmień app/google-services.json z konsoli Firebase.",
-            fontFamily = Outfit,
-            fontSize = 11.sp,
-            color = MsInkSoft,
-            fontWeight = FontWeight.Normal
-        )
     }
 }
 
